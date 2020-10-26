@@ -1,0 +1,170 @@
+---
+title: "p8130_hw4"
+author: "Jeffrey Liang"
+date: "10/26/2020"
+output: 
+  pdf_document:
+    latex_engine: "xelatex"
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(readxl)
+library(patchwork)
+library(multcomp)
+knitr::opts_chunk$set(
+  fig.height = 6,
+  fig.width = 8,
+  message = F,
+  echo = F,
+  warning = F
+)
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis",
+  digits = 3
+)
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+
+```
+
+# Problem 1
+In the context of ANOVA model, prove the partitioning of the total variability (sum of squares),
+i.e.,
+∑𝑘 𝑖=1 ∑𝑛 𝑗=𝑖 1(𝑦𝑖𝑗 − 𝑦̿)2 = ∑𝑘 𝑖=1 ∑𝑛 𝑗=𝑖 1(𝑦𝑖𝑗 − 𝑦̅𝑖)2 + ∑𝑘 𝑖=1 ∑𝑛 𝑗=𝑖 1(𝑦̅𝑖 − 𝑦̿)2
+
+__PROOF__
+we have by definition, the
+$$ y_{ij} - \overline{\bar{y}} = (y_{ij}-\bar{y_i}) + (\bar{y_i} - \overline{\bar{y}})$$
+
+Fixing within group i, we have within group variance:
+$$\begin{aligned}
+ \sum_j(y_{ij} - \overline{\bar{y}})^2\\
+ =\sum_j[ (y_{ij}-\bar{y_i}) + (\bar{y_i} - \overline{\bar{y}})]^2\\
+ = \sum_j{ (y_{ij}-\bar{y_i})^2 + (\bar{y_i} - \overline{\bar{y}})^2
+ +  2*(y_{ij}-\bar{y_i})(\bar{y_i} - \overline{\bar{y}})}\\
+\end{aligned}$$
+
+With $\sum_j y_{ij}/n_j = \bar{y_i}$ and $\sum_j 1= n_j$
+$$\begin{aligned}
+\sum_j{2*(y_{ij}-\bar{y_i})(\bar{y_i} - \overline{\bar{y}})}\\
+= 2\sum_j y_{ij}*\bar{y_i} - y_{ij}*\overline{\bar{y}} - 
+\bar{y_i}^2 + \bar{y_i}*\overline{\bar{y}}\\
+=2*n_j*\bar{y_i}^2 - 2*n_j*\bar{y_i}*\overline{\bar{y}} - 
+2*n_j*\bar{y_i}^2 + 2*n_j*\bar{y_i}*\overline{\bar{y}}\\
+rearrange = 2*n_j*\bar{y_i}^2 - 2*n_j*\bar{y_i}^2 
++ 2*n_j*\bar{y_i}*\overline{\bar{y}}-2*n_j*\bar{y_i}*\overline{\bar{y}}\\
+= 0
+\end{aligned}$$
+
+Now sum over group i we have
+$$ \sum_i\sum_j(y_{ij} - \overline{\bar{y}})^2 = \sum_i\sum_j(y_{ij}-\bar{y_i})^2 + (\bar{y_i} - \overline{\bar{y}})^2$$
+
+
+\newpage
+# Problem 2
+A rehabilitation center is interested in examining the relationship between physical status before
+therapy (‘below average’, ‘average’ and ‘above average’) and the time (days) required in physical
+therapy until successful rehabilitation. Records from patients 18-30 years old were collected and
+provided to you for statistical analysis (dataset “Knee.csv”).
+
+Assuming that data are normally distributed, answer the questions below:
+
+a) Generate descriptive statistics for each group and comment on the differences observed. (4p)
+
+b) Using a type I error of 0.01, obtain the ANOVA table. State the hypotheses, test statistic,
+critical value, and decision interpreted in the context of the problem. (5p)
+
+c) Based on your response in part b), perform pairwise comparisons with the appropriate
+adjustments (Bonferroni, Tukey, and Dunnett – ‘below average’ as reference). Report your
+findings and comment on the differences/similarities between these three methods. (5p)
+
+d) Write a short paragraph summarizing your overall results as if you were presenting to the
+rehabilitation center director. (1p)
+
+__PROOF__
+```{r}
+knee_data =
+  read_csv(here::here("Knee.csv")) %>% 
+  pivot_longer(
+    cols = Below:Above,
+    names_to = "status",
+    values_to = "day_to_rehab"
+  ) %>% 
+  janitor::clean_names() %>% 
+  mutate(status =
+           forcats::fct_relevel(status,"Below","Average","Above"))
+
+skimr::skim_without_charts(knee_data %>% group_by(status))
+
+knee_data %>% 
+  ggplot(aes(x = status, y = day_to_rehab, fill  = status))+
+  geom_boxplot()
+```
+
+```{r}
+knee_anova =
+  aov(day_to_rehab ~ status, data = knee_data, alpha = 0.01)
+
+summary(knee_anova)
+
+qf(0.99,2,22)
+```
+
+```{r}
+bon =
+  pairwise.t.test(x = knee_data$day_to_rehab,
+                  g = knee_data$status,
+                  p.adjust.method = "bonferroni")
+show(bon)
+
+Tukey =
+  TukeyHSD(knee_anova)
+show(Tukey)
+plot(Tukey)
+
+summary(glht(knee_anova), linfct=mcp(Group="Dunnett"))
+```
+
+# Problem 3
+A research article was published with the following headline “For adults, chicken pox vaccine may
+stop shingles”. The findings were based on a randomized clinical trial with a total of 420 adults
+being randomized to receive either chicken pox vaccine or placebo. While the results were
+intriguing, some side effects emerged and required further investigation. The table below
+summarizes the frequencies of one of the most frequent and concerning side effect - swelling
+around the injection site.
+![table](table_1.png)
+
+Use a significance level of 0.05 to assess if the distribution of swelling status is the same for the
+two treatment populations.
+
+a) Justify the appropriate test to be used for addressing the question of interest. (2p)
+
+b) Provide the table with all values necessary for calculating the test statistic. (4p)
+
+c) State the hypotheses, test statistic, critical value, p value and decision rule interpreted in the
+context of the problem. (4p)
+
+__PROOF__
+```{r}
+Prob3_table =
+  matrix(c(54,16,42,32,134,142),ncol = 3,
+         dimnames = list(
+           c("Vaccine","Placebo"),
+           c("Major_Swelling",
+             "Minor_Swelling",
+             "No_Swelling")
+         ))
+
+Prob3_table
+
+Prob3 =
+  chisq.test(Prob3_table)
+
+Prob3$expected
+
+Prob3
+```
+
