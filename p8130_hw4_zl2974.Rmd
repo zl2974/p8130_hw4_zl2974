@@ -33,7 +33,7 @@ scale_fill_discrete = scale_fill_viridis_d
 # Problem 1
 In the context of ANOVA model, prove the partitioning of the total variability (sum of squares),
 i.e.,
-∑𝑘 𝑖=1 ∑𝑛 𝑗=𝑖 1(𝑦𝑖𝑗 − 𝑦̿)2 = ∑𝑘 𝑖=1 ∑𝑛 𝑗=𝑖 1(𝑦𝑖𝑗 − 𝑦̅𝑖)2 + ∑𝑘 𝑖=1 ∑𝑛 𝑗=𝑖 1(𝑦̅𝑖 − 𝑦̿)2
+$$ \sum_i\sum_j(y_{ij} - \overline{\bar{y}})^2 = \sum_i\sum_j(y_{ij}-\bar{y_i})^2 + (\bar{y_i} - \overline{\bar{y}})^2$$
 
 __PROOF__
 we have by definition, the
@@ -85,24 +85,44 @@ d) Write a short paragraph summarizing your overall results as if you were prese
 rehabilitation center director. (1p)
 
 __PROOF__
+
+## a)
+
 ```{r}
 knee_data =
-  read_csv(here::here("Knee.csv")) %>% 
-  pivot_longer(
-    cols = Below:Above,
-    names_to = "status",
-    values_to = "day_to_rehab"
-  ) %>% 
-  janitor::clean_names() %>% 
+  read_csv(here::here("file/Knee.csv")) %>%
+  pivot_longer(cols = Below:Above,
+               names_to = "status",
+               values_to = "day_to_rehab") %>%
+  janitor::clean_names() %>%
   mutate(status =
-           forcats::fct_relevel(status,"Below","Average","Above"))
+           forcats::fct_relevel(status, "Below", "Average", "Above"))
 
 skimr::skim_without_charts(knee_data %>% group_by(status))
 
-knee_data %>% 
-  ggplot(aes(x = status, y = day_to_rehab, fill  = status))+
+knee_data %>%
+  ggplot(aes(x = status, y = day_to_rehab, fill  = status)) +
   geom_boxplot()
 ```
+
+## b)
+$H_0$ : there's no difference between groups
+
+$H_1$ : at least one group is different from the other groups
+
+$Between~Sum~of~Square = \sum_{i=1}^k\sum_{j=1}^{n_i}(\bar{y_i} - \bar{\bar{y}})^2=\sum_i^kn_i\bar{y_i}^2-\frac{y_{..}^2}{n}$
+
+$Within~Sum~of~Square = \sum_{i=1}^k\sum_{j=1}^{n_i}(y_{ij}-\bar{y_i})^2=\sum_i^k(n_i-1)s_i^2$
+
+$Between~Mean~Square = \frac{\sum_{i=1}^k\sum_{j=1}^{n_i}(\bar{y_i} - \bar{\bar{y}})^2}{k-1}$
+
+$Within~Mean~Square = \frac{\sum_{i=1}^k\sum_{j=1}^{n_i}(y_{ij}-\bar{y_i})^2}{n-k}$
+
+$F_{statistics} = \frac{Between~Mean~Square}{Within~Mean~Square} \sim F(k-1,n-k)$
+
+$Reject ~ H_0 ~ if ~ F>F_{k-1,n-k,1-\alpha}$
+
+$Fail ~ reject ~ H_0 ~ if ~F<F_{k-1,n-k,1-\alpha}$
 
 ```{r}
 knee_anova =
@@ -110,14 +130,18 @@ knee_anova =
 
 summary(knee_anova)
 
-qf(0.99,2,22)
+qf(0.99, 2, 22)
 ```
+\ At 99% confidence level, the F-statistics is greater than the critical value(`r qf(0.99, 2, 22)`), we reject the null hypothesis that there's no difference between groups.
 
+## c)
 ```{r}
 bon =
-  pairwise.t.test(x = knee_data$day_to_rehab,
-                  g = knee_data$status,
-                  p.adjust.method = "bonferroni")
+  pairwise.t.test(
+    x = knee_data$day_to_rehab,
+    g = knee_data$status,
+    p.adjust.method = "bonferroni"
+  )
 show(bon)
 
 Tukey =
@@ -125,7 +149,7 @@ Tukey =
 show(Tukey)
 plot(Tukey)
 
-summary(glht(knee_anova), linfct=mcp(Group="Dunnett"))
+summary(glht(knee_anova), linfct = mcp(Group = "Dunnett"))
 ```
 
 # Problem 3
@@ -135,7 +159,7 @@ being randomized to receive either chicken pox vaccine or placebo. While the res
 intriguing, some side effects emerged and required further investigation. The table below
 summarizes the frequencies of one of the most frequent and concerning side effect - swelling
 around the injection site.
-![table](table_1.png)
+![table](./file/table_1.png)
 
 Use a significance level of 0.05 to assess if the distribution of swelling status is the same for the
 two treatment populations.
@@ -148,6 +172,12 @@ c) State the hypotheses, test statistic, critical value, p value and decision ru
 context of the problem. (4p)
 
 __PROOF__
+
+## a)
+
+\ we are examining the associatation between Vaccine status and Swelling symptom. And there're more than 2 groups, so Contigency table with Chi-sq test for independent would be the testing method we consider.
+
+## b)
 ```{r}
 Prob3_table =
   matrix(c(54,16,42,32,134,142),ncol = 3,
@@ -157,14 +187,31 @@ Prob3_table =
              "Minor_Swelling",
              "No_Swelling")
          ))
-
-Prob3_table
+## Observed Value
+Prob3_table %>% as.tibble() %>% knitr::kable(caption = "Observed Values")
 
 Prob3 =
   chisq.test(Prob3_table)
 
-Prob3$expected
+## Expected Value
+Prob3$expected %>% as.tibble() %>% knitr::kable(caption = "Expected Values")
+```
+\ All expected values in the cells are greater than 5, the normality for Chi-sq test is fitted. We continue applying Chi-sq test.
 
-Prob3
+## c)
+
+$H_0$ : the swelling symptom is independent of vaccine status
+
+$H_1$ : the swelling symptom is dependent/associate of vaccine status
+
+$\mathcal{X}^2 = \sum_i^{row}\sum_j^{col}\frac{(n_{ij}-E_{ij})^2}{E_{ij}} \sim \mathcal{X}^2_{df = (row-1)\times(col-1)}$
+  
+$Reject ~ H_0 ~ if ~ \mathcal{X}^2>\mathcal{X}^2_{(r-1))*(c-1),1-\alpha}$
+
+$Fail ~ reject ~ H_0 ~ if ~\mathcal{X}^2<\mathcal{X}^2_{(r-1))*(c-1),1-\alpha}$
+
+```{r}
+Prob3 
 ```
 
+\ The Chi-sq statistics value is greater than the critical value at 95% confidence level, so we reject the null hypothesis that the the swelling symptom is independent to vaccine status.
