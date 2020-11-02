@@ -98,12 +98,35 @@ knee_data =
   mutate(status =
            forcats::fct_relevel(status, "Below", "Average", "Above"))
 
-skimr::skim_without_charts(knee_data %>% group_by(status))
+my_control =
+  arsenal::tableby.control(
+    total = T,
+    test = F,
+    # No test p-values yet
+    numeric.stats = c("meansd", "medianq1q3", "range"),
+    cat.stats = c("countpct"),
+    stats.labels = list(
+      meansd = "Mean (SD)",
+      medianq1q3 = "Median (Q1, Q3)",
+      range = "Min - Max",
+      Nmiss2 = "Missing",
+      countpct = "N (%)"
+    )
+  )
+
+summary(
+  arsenal::tableby(status ~ day_to_rehab,
+                   data = knee_data,
+                   control = my_control)
+) %>% 
+  knitr::kable(caption = "Descriptive statistics")
 
 knee_data %>%
   ggplot(aes(x = status, y = day_to_rehab, fill  = status)) +
   geom_boxplot()
 ```
+
+\ We see that the mean rehabilitate days in group-ABOVE and groip-Below might be different.
 
 ## b)
 $H_0$ : there's no difference between groups
@@ -135,6 +158,9 @@ qf(0.99, 2, 22)
 \ At 99% confidence level, the F-statistics is greater than the critical value(`r qf(0.99, 2, 22)`), we reject the null hypothesis that there's no difference between groups.
 
 ## c)
+
+### Bonferroni adjusted pairswide t-test
+
 ```{r}
 bon =
   pairwise.t.test(
@@ -143,12 +169,20 @@ bon =
     p.adjust.method = "bonferroni"
   )
 show(bon)
+```
 
+### Tukey Test
+
+```{r}
 Tukey =
   TukeyHSD(knee_anova)
 show(Tukey)
 plot(Tukey)
+```
 
+### Dunnett Test
+
+```{r}
 summary(glht(knee_anova), linfct = mcp(Group = "Dunnett"))
 ```
 
@@ -188,13 +222,21 @@ Prob3_table =
              "No_Swelling")
          ))
 ## Observed Value
-Prob3_table %>% as.tibble() %>% knitr::kable(caption = "Observed Values")
+Prob3_table %>% 
+  as.tibble() %>% 
+  mutate(vaccine_status =c("Vaccine","Placebo")) %>% 
+  relocate(vaccine_status) %>% 
+  knitr::kable(caption = "Observed Values")
 
 Prob3 =
   chisq.test(Prob3_table)
 
 ## Expected Value
-Prob3$expected %>% as.tibble() %>% knitr::kable(caption = "Expected Values")
+Prob3$expected %>% 
+  as.tibble() %>% 
+  mutate(vaccine_status =c("Vaccine","Placebo")) %>% 
+  relocate(vaccine_status) %>% 
+  knitr::kable(caption = "Expected Values")
 ```
 \ All expected values in the cells are greater than 5, the normality for Chi-sq test is fitted. We continue applying Chi-sq test.
 
@@ -214,4 +256,4 @@ $Fail ~ reject ~ H_0 ~ if ~\mathcal{X}^2<\mathcal{X}^2_{(r-1))*(c-1),1-\alpha}$
 Prob3 
 ```
 
-\ The Chi-sq statistics value is greater than the critical value at 95% confidence level, so we reject the null hypothesis that the the swelling symptom is independent to vaccine status.
+\ The Chi-sq statistics value is greater than the critical value(`r qchisq(0.99,2)`) at 95% confidence level, so we reject the null hypothesis that the the swelling symptom is independent to vaccine status.
