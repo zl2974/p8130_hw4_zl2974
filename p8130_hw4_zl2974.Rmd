@@ -13,8 +13,8 @@ library(readxl)
 library(patchwork)
 library(multcomp)
 knitr::opts_chunk$set(
-  fig.height = 6,
-  fig.width = 8,
+  fig.height = 3,
+  fig.width = 4,
   message = F,
   echo = F,
   warning = F
@@ -185,6 +185,10 @@ plot(Tukey)
 ```{r}
 summary(glht(knee_anova), linfct = mcp(Group = "Dunnett"))
 ```
+
+## d)
+
+\ The total mean time required in therapy is 31.9 days, whereas whom begin with below average physical status takes 38 days, compared with 33 and 23 days with groups average status and above average status. After ANOVA test, we don't have enough evidence that these difference are cause by chance at a 99% confidence level. Further testing between groups confirm this finding as we reject that the patients begin with Above average need the same recover time as those from below average or average physical status.
 
 # Problem 3
 A research article was published with the following headline “For adults, chicken pox vaccine may
