@@ -166,7 +166,8 @@ bon =
   pairwise.t.test(
     x = knee_data$day_to_rehab,
     g = knee_data$status,
-    p.adjust.method = "bonferroni"
+    p.adjust.method = "bonferroni",
+    conf.level =0.99
   )
 show(bon)
 ```
@@ -177,7 +178,7 @@ show(bon)
 than Bonferroni."
 ```{r}
 Tukey =
-  TukeyHSD(knee_anova)
+  TukeyHSD(knee_anova,conf.level =0.99)
 show(Tukey)
 plot(Tukey)
 ```
