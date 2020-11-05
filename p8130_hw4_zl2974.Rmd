@@ -263,6 +263,8 @@ $Reject ~ H_0 ~ if ~ \mathcal{X}^2>\mathcal{X}^2_{(r-1))*(c-1),1-\alpha}$
 
 $Fail ~ reject ~ H_0 ~ if ~\mathcal{X}^2<\mathcal{X}^2_{(r-1))*(c-1),1-\alpha}$
 
+$p~value = \int_{x^2}^\infty Chi\_sq(\mathcal{X},k=2)= \int_{x^2}^\infty2*{Z^2}=\int_{x^2}^\infty{\frac{1}{\pi}e^{-s^2}}ds=`r Prob3$p.value`$
+
 ```{r}
 Prob3 
 ```
