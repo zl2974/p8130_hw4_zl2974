@@ -95,6 +95,7 @@ knee_data =
                names_to = "status",
                values_to = "day_to_rehab") %>%
   janitor::clean_names() %>%
+  drop_na() %>% 
   mutate(status =
            forcats::fct_relevel(status, "Below", "Average", "Above"))
 
