@@ -192,6 +192,11 @@ arm."
 summary(glht(knee_anova), linfct = mcp(Group = "Dunnett"))
 ```
 
+\ All three tests are posy-hoc analysis followed multi-group comparison. All adress the issue of control and preserve the overall (family-wise) error rate at the pre-
+specified alpha level. All test if one group is different/same with the other groups.
+
+
+
 ## d)
 
 \ The total mean time required in therapy is 31.9 days, whereas whom begin with below average physical status takes 38 days, compared with 33 and 23 days with groups average status and above average status. After ANOVA test, we don't have enough evidence that these difference are cause by chance at a 99% confidence level. Further testing between groups confirm this finding as we reject that the patients begin with Above average need the same recover time as those from below average or average physical status.
@@ -263,7 +268,11 @@ $Reject ~ H_0 ~ if ~ \mathcal{X}^2>\mathcal{X}^2_{(r-1))*(c-1),1-\alpha}$
 
 $Fail ~ reject ~ H_0 ~ if ~\mathcal{X}^2<\mathcal{X}^2_{(r-1))*(c-1),1-\alpha}$
 
-$p~value = \int_{x^2}^\infty Chi\_sq(\mathcal{X},k=2)= \int_{x^2}^\infty2*{Z^2}=\int_{x^2}^\infty{\frac{1}{\pi}e^{-s^2}}ds=`r Prob3$p.value`$
+$$\begin{aligned}
+p~value = \int_{x^2}^\infty Chi\_sq(\mathcal{X},k=2)\\
+= \int_{x^2}^\infty2*{Z^2}=\int_{x^2}^\infty{\frac{1}{\pi}e^{-s^2}}ds\\
+=e^{-x^2/2}=`r Prob3$p.value`
+\end{aligned}$$
 
 ```{r}
 Prob3 
